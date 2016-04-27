@@ -35,18 +35,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   try
   {
     ROS_INFO("callback");
-    cv_bridge::CvImagePtr cv_ptr;
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    Mat frame = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image;
     ROS_INFO("make cascade0 ");
     String face_cascade_name = "../xml/haarcascade_frontalface_alt2.xml";
     ROS_INFO("make cascade0 ");
     CascadeClassifier face_cascade;
     ROS_INFO("make cascade");
     if( !face_cascade.load( face_cascade_name ) ){ ROS_INFO("--(!)Error loading\n");}
-    if( !cv_ptr->image.empty() ){
+    if( !frame.empty() ){
        ROS_INFO("!frame empty");
-       Mat frame;
-       cvtColor( cv_ptr->image, frame, CV_BGR2GRAY );
+       cvtColor( frame, frame, CV_BGR2GRAY );
        vector<Rect> faces;
        face_cascade.detectMultiScale( frame, faces, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
        
