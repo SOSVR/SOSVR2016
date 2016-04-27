@@ -1,35 +1,40 @@
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
- #include "opencv2/highgui/highgui.hpp"
- #include "opencv2/objdetect/objdetect.hpp"
- #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
- #include "human_detector/facesMsg.h"
- #include "human_detector/faceMsg.h"
+#include "human_detector/facesMsg.h"
+#include "human_detector/faceMsg.h"
+
 
 #include "std_msgs/String.h"
 
- #include <iostream>
- #include <stdio.h>
+#include <iostream>
+#include <stdio.h>
+#include <ros/package.h>
 
 using namespace std;
 using namespace cv;
 ros::Publisher human_pub;
 void imageCallback(const sensor_msgs::ImageConstPtr& msg);
 
+CascadeClassifier face_cascade;
+
 int main(int argc, char **argv)
 {
   ROS_INFO("main");
   ros::init(argc, argv, "image_listener");
   ros::NodeHandle nh;
-  human_pub = nh.advertise<std_msgs::String>("human_detection_result", 1000);
+  std::string path = ros::package::getPath("human_detector");
+  if( !face_cascade.load( path +"/xml/haarcascade_frontalface_alt2.xml" ) ){ ROS_INFO("--(!)Error loading\n");}
+  human_pub = nh.advertise<human_detector::facesMsg>("human_detection_result", 1);
   image_transport::ImageTransport it(nh);
-  image_transport::Subscriber sub = it.subscribe("usb_cam/image_raw", 1000, imageCallback);
+  image_transport::Subscriber sub = it.subscribe("usb_cam/image_raw", 1, imageCallback);
   ROS_INFO("end_main");
   ros::spin();
 }
-
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
   try
@@ -37,11 +42,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     ROS_INFO("callback");
     Mat frame = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image;
     ROS_INFO("make cascade0 ");
-    String face_cascade_name = "../xml/haarcascade_frontalface_alt2.xml";
     ROS_INFO("make cascade0 ");
-    CascadeClassifier face_cascade;
     ROS_INFO("make cascade");
-    if( !face_cascade.load( face_cascade_name ) ){ ROS_INFO("--(!)Error loading\n");}
+    
     if( !frame.empty() ){
        ROS_INFO("!frame empty");
        cvtColor( frame, frame, CV_BGR2GRAY );
@@ -56,9 +59,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	  fMsg.width = faces[i].width;
 	  fMsg.height = faces[i].height;
           fsMsg.facesArray.push_back(fMsg);
+	  ROS_INFO("----FMSGX%d" , fMsg.x);
        }
-
-       human_pub.publish(msg);
+       human_pub.publish(fsMsg);
     }
   }
   catch (cv_bridge::Exception& e)
