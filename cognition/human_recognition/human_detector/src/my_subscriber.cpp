@@ -15,12 +15,33 @@
 #include <stdio.h>
 #include <ros/package.h>
 
+#include <fstream>
+#include <ios>
+
 using namespace std;
 using namespace cv;
 ros::Publisher human_pub;
+HOGDescriptor body_cascade;
+
 void imageCallback(const sensor_msgs::ImageConstPtr& msg);
 
-CascadeClassifier face_cascade;
+static void loadDescriptorVector(vector<float>& descriptorVector, string fileName) {
+    string separator = " ";
+    fstream File;
+    File.open(fileName.c_str(), ios::in);
+    if (File.good() && File.is_open()) {
+
+	for(string line; getline(File, line); )
+	{
+	    istringstream in(line);
+	    string buf;
+    	    while (in >> buf){		
+       		descriptorVector.push_back(atof(buf.c_str()));
+	    }
+	}
+
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -28,7 +49,10 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "image_listener");
   ros::NodeHandle nh;
   std::string path = ros::package::getPath("human_detector");
-  if( !face_cascade.load( path +"/xml/haarcascade_frontalface_alt2.xml" ) ){ ROS_INFO("--(!)Error loading\n");}
+  if( !body_cascade.load( path +"/xml/cvHOGClassifier.yaml" ) ){ ROS_INFO("--(!)Error loading\n");}
+  vector<float> descriptorVector;
+  loadDescriptorVector(descriptorVector, path +"/xml/descriptorvector.dat");
+  body_cascade.setSVMDetector(descriptorVector);
   human_pub = nh.advertise<human_detector::facesMsg>("human_detection_result", 1);
   image_transport::ImageTransport it(nh);
   image_transport::Subscriber sub = it.subscribe("usb_cam/image_raw", 1, imageCallback);
@@ -39,17 +63,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
   try
   {
-    ROS_INFO("callback");
     Mat frame = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image;
-    ROS_INFO("make cascade0 ");
-    ROS_INFO("make cascade0 ");
-    ROS_INFO("make cascade");
     
     if( !frame.empty() ){
-       ROS_INFO("!frame empty");
        cvtColor( frame, frame, CV_BGR2GRAY );
        vector<Rect> faces;
-       face_cascade.detectMultiScale( frame, faces, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
+       body_cascade.detectMultiScale( frame, faces, -0.649049, Size(8, 8), Size(8, 8) );
        
        human_detector::facesMsg fsMsg;
        for(int i=0; i<faces.size(); i++){
@@ -61,7 +80,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
           fsMsg.facesArray.push_back(fMsg);
 	  ROS_INFO("----FMSGX%d" , fMsg.x);
        }
-       human_pub.publish(fsMsg);
+       human_pub.publish(fsMsg);       
     }
   }
   catch (cv_bridge::Exception& e)
