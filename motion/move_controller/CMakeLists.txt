@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(motion_controller)
+project(move_controller)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
+  controller_manager
+  geometry_msgs
+  joy
+  #ros_control
+  #ros_controllers
+  sensor_msgs
   std_msgs
 )
 
@@ -67,7 +71,7 @@ catkin_python_setup()
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   geometry_msgs#   sensor_msgs#   std_msgs
 # )
 
 ################################################
@@ -101,8 +105,8 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES motion_controller
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES move_controller
+  CATKIN_DEPENDS controller_manager geometry_msgs joy ros_control ros_controllers sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,24 +122,24 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(motion_controller
-#   src/${PROJECT_NAME}/motion_controller.cpp
+# add_library(move_controller
+#   src/${PROJECT_NAME}/move_controller.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(motion_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(move_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(motion_controller_node src/motion_controller_node.cpp)
+# add_executable(move_controller_node src/move_controller_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(motion_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(move_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(motion_controller_node
+# target_link_libraries(move_controller_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -154,7 +158,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS motion_controller motion_controller_node
+# install(TARGETS move_controller move_controller_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -179,7 +183,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_motion_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_move_controller.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
@@ -187,5 +191,6 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-
+add_executable(teleop_joy src/joy_teleop.cpp)
+target_link_libraries(teleop_joy ${catkin_LIBRARIES})
 
