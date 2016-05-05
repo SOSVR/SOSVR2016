@@ -1,5 +1,5 @@
 # SOSVR2016 - bring_up
-A package for spawning a robot (pioneer3at) into [Gazebo][http://gazebosim.org] with [ROS][http://www.ros.org].
+A package for spawning a robot (pioneer3at) into [Gazebo](http://gazebosim.org) with [ROS](http://www.ros.org).
 ### Usage
 We assume you've installed ROS and Gazebo and configured it correctly. Then:
 1. Open a new terminal. Then:
