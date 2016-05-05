@@ -43,11 +43,15 @@
   <build_depend>controller_manager</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>joy</build_depend>
+  <build_depend>ros_control</build_depend>
+  <build_depend>ros_controllers</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <run_depend>controller_manager</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>joy</run_depend>
+  <run_depend>ros_control</run_depend>
+  <run_depend>ros_controllers</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
 
