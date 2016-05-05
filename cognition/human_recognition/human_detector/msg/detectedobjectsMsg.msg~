@@ -1,1 +1,0 @@
-objectMsg[] objectsArray
