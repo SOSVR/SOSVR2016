@@ -236,11 +236,31 @@
       <left_front>left_front</left_front>
       <left_rear>left_rear</left_rear>
       <MaxForce>5.0</MaxForce>
-    </plugin>
-    <!--    
+    </plugin> 
+
+    	<!-- Adding Camera -->
+
+    	<include>
+      <uri>model://camera</uri>
+      <pose>0.2 0 0.15 0 0 0</pose>
+    </include>
+    <joint name="camera_joint" type="revolute">
+      <child>camera::link</child>
+      <parent>chassis</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+      
+    	<!-- Adding Hokuyo -->
+
       <include>
         <uri>model://hokuyo</uri>
-        <pose>0.2 0 0.13 0 0 0</pose>
+        <pose>0.2 0 0.19 0 0 0</pose>
       </include>
       <joint name="hokuyo_joint" type="revolute">
         <child>hokuyo::link</child>
@@ -253,6 +273,6 @@
           </limit>
         </axis>
       </joint>
-    -->
+    
   </model>
 </sdf>
