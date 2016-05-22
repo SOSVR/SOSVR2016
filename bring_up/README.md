@@ -19,6 +19,6 @@ rosrun gazebo_ros gzclient
 4. Clone this repository in your ROS workspace. Then *make* this package with `catkin_make` and *source* it.
 5. In a new terminal:
 ```
-roslaunch bring_up bring_up_spawn.launch
+roslaunch bring_up bring_up.launch
 ```
-It should run both gzserver initialized with local gazebo_path parameters andd gzclient then spwan a model into it. :)
+It should spwan a model into your gazebo client. :)

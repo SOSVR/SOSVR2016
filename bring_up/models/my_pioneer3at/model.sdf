@@ -230,13 +230,17 @@
         <use_parent_model_frame>true</use_parent_model_frame>
       </axis>
     </joint>
-    <plugin name="SkidSteerDrivePlugin" filename="libSkidSteerDrivePlugin.so">
+
+    <!-- <plugin name="SkidSteerDrivePlugin" filename="libSkidSteerDrivePlugin.so">
       <right_front>right_front</right_front>
       <right_rear>right_rear</right_rear>
       <left_front>left_front</left_front>
       <left_rear>left_rear</left_rear>
       <MaxForce>5.0</MaxForce>
-    </plugin> 
+    </plugin> --> 
+
+    
+
 
     	<!-- Adding Camera -->
 
@@ -276,6 +280,23 @@
       </joint>
 
       <!-- Camera Publisher Plugin -->
+      <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+        <updateRate>100.0</updateRate>
+        <robotNamespace>/</robotNamespace>
+
+        <leftFrontJoint>left_front</leftFrontJoint>
+        <rightFrontJoint>right_front</rightFrontJoint>
+        <leftRearJoint>left_rear</leftRearJoint>
+        <rightRearJoint>right_rear</rightRearJoint>
+
+        <wheelSeparation>0.4</wheelSeparation>
+        <wheelDiameter>0.215</wheelDiameter>
+        <robotBaseFrame>base_link</robotBaseFrame>
+        <torque>20</torque>
+        <topicName>joy_teleop/cmd_vel</topicName>
+        <broadcastTF>true</broadcastTF>
+      </plugin>
+    </gazebo> 
 
 <!--       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
