@@ -9,13 +9,16 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros
   roscpp
   rospy
-  std_msgs
+  tf urdf geometry_msgs sensor_msgs std_msgs
   roslaunch
 )
 
 # Depend on system install of Gazebo
 find_package(gazebo REQUIRED)
 
+catkin_package(
+    CATKIN_DEPENDS tf urdf geometry_msgs sensor_msgs std_msgs
+)
 
 roslaunch_add_file_check(launch)
 
