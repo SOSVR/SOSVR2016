@@ -1,35 +1,109 @@
 #!/usr/bin/env python
+"""
+Behaviour, S.O.S.VR
+Developed by: Sajjad Azami
+June 2016
+"""
 
+import math
+
+import actionlib
 import roslib
-
-roslib.load_manifest('turtlesim')
 import rospy
 import smach
-import turtlesim
-import math
 import smach_ros
+import turtlesim
+from actionlib_msgs.msg import GoalStatusArray
+from move_base_msgs.msg import *
 from smach_ros import ServiceState
 from turtlesim.srv import *
 
+################### VARIABLES ###################
+goals_list = []
+current_goal_status = ''
 
+count = 0
+goalstemp = []
+for i in range(-10, 0):
+    tmp = [i, i, 0, 1, 0, 0, 1]
+    goalstemp.append(tmp)
+
+
+################### END VARIABLES ###################
+
+
+################### FUNCTIONS ###################
+
+
+def callback_goal_status(data):
+    current_goal_status = data.status_list[0].text
+
+
+def listener():
+    rospy.init_node('goal_status_listener', anonymous=True)
+    rospy.Subscriber("move_base/status", GoalStatusArray, callback_goal_status)
+    rospy.spin()
+
+
+# publishes goal on move_base/goal using SimpleActionClient
+# inputs: position x, y, z, orientation w, x, y, z
+def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
+    # Simple Action Client
+    sac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+
+    # create goal
+    goal = MoveBaseGoal()
+
+    # set goal
+    goal.target_pose.pose.position.x = pos_x
+    goal.target_pose.pose.position.y = pos_y
+    goal.target_pose.pose.orientation.w = ornt_w
+    goal.target_pose.pose.orientation.z = ornt_z
+    goal.target_pose.header.frame_id = 'odom'
+    goal.target_pose.header.stamp = rospy.Time.now()
+
+    # start listener
+    sac.wait_for_server()
+
+    # send goal
+    sac.send_goal(goal)
+
+    # finish
+    sac.wait_for_result()
+
+    # print result
+    print sac.get_result()
+
+
+################### END FUNCTIONS ###################
+
+
+################### STATES ###################
 # define Init state
 class Init(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['toExplore', 'toRescue'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state 1')
-        return 'outcome1'
+        rospy.loginfo('Executing Init')
+        return 'toExplore'
 
 
 # define Explore state
 class Explore(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
+        smach.State.__init__(self, outcomes=['victimSpotsted', 'victimNotSpotted'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state 1')
-        return 'outcome1'
+        global count
+        rospy.loginfo('Executing state Explore')
+        # goal_list_temp = [1, 1, 0, 1, 0, 0, 1]  # TODO set right goals
+        goal_list_temp = goalstemp[count]  # TODO set right goals
+        goals_list.append(goal_list_temp)
+        move_to(goal_list_temp[0], goal_list_temp[1], goal_list_temp[2],
+                goal_list_temp[3], goal_list_temp[4], goal_list_temp[5], goal_list_temp[6], )
+        count += 1
+        return 'victimNotSpotted'
 
 
 # define InitExplore state (Inner State)
@@ -38,8 +112,8 @@ class InitExplore(smach.State):
         smach.State.__init__(self, outcomes=['canExplore', 'cannotExplore'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state 1')
-        return 'outcome1'
+        rospy.loginfo('Executing InitExplore')
+        return 'canExplore'
 
 
 # define InitRescue state (Inner State)
@@ -80,6 +154,9 @@ class PassTask(smach.State):
     def execute(self, userdata):
         rospy.loginfo('PassTask')
         return 'outcome2'
+
+
+################### END STATES ###################
 
 
 def main():
