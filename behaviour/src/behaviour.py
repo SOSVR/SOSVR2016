@@ -6,6 +6,7 @@ June 2016
 """
 
 import math
+from itertools import count
 
 import actionlib
 import roslib
@@ -14,13 +15,16 @@ import smach
 import smach_ros
 import turtlesim
 from actionlib_msgs.msg import GoalStatusArray
+from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import *
 from smach_ros import ServiceState
 from turtlesim.srv import *
 
-################### VARIABLES ###################
+#####################################################
+##################### VARIABLES #####################
 goals_list = []
 current_goal_status = ''
+global global_costmap
 
 count = 0
 goalstemp = []
@@ -30,18 +34,33 @@ for i in range(-10, 0):
 
 
 ################### END VARIABLES ###################
+#####################################################
 
+##################### FUNCTIONS #####################
+#####################################################
 
-################### FUNCTIONS ###################
-
-
+# subscriber method callback from /move_base/status
 def callback_goal_status(data):
     current_goal_status = data.status_list[0].text
 
 
-def listener():
+# subscriber method from /move_base/status
+def listener_goal_status():
     rospy.init_node('goal_status_listener', anonymous=True)
     rospy.Subscriber("move_base/status", GoalStatusArray, callback_goal_status)
+    rospy.spin()
+
+
+# subscriber method callback from /move_base/global_costmap/costmap
+def callback_global_costmap(data):
+    global global_costmap
+    global_costmap = data.data
+
+
+# subscriber method from /move_base/global_costmap/costmap
+def listener_global_costmap():
+    # rospy.init_node('global_costmap_listener', anonymous=True)
+    rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap)
     rospy.spin()
 
 
@@ -76,9 +95,11 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
 
 
 ################### END FUNCTIONS ###################
+#####################################################
 
+####################### STATES ######################
+#####################################################
 
-################### STATES ###################
 # define Init state
 class Init(smach.State):
     def __init__(self):
@@ -92,16 +113,16 @@ class Init(smach.State):
 # define Explore state
 class Explore(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['victimSpotsted', 'victimNotSpotted'])
+        smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
 
     def execute(self, userdata):
         global count
         rospy.loginfo('Executing state Explore')
         # goal_list_temp = [1, 1, 0, 1, 0, 0, 1]  # TODO set right goals
-        goal_list_temp = goalstemp[count]  # TODO set right goals
-        goals_list.append(goal_list_temp)
-        move_to(goal_list_temp[0], goal_list_temp[1], goal_list_temp[2],
-                goal_list_temp[3], goal_list_temp[4], goal_list_temp[5], goal_list_temp[6], )
+        goal_temp = goalstemp[count]  # TODO set right goals
+        goals_list.append(goal_temp)
+        move_to(goal_temp[0], goal_temp[1], goal_temp[2],
+                goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
         count += 1
         return 'victimNotSpotted'
 
@@ -156,12 +177,13 @@ class PassTask(smach.State):
         return 'outcome2'
 
 
-################### END STATES ###################
+#################### END STATES #####################
+#####################################################
 
 
 def main():
     rospy.init_node('behaviour')
-
+    listener_global_costmap()
     sm = smach.StateMachine(
         outcomes=['SHUTDOWN'])
 
