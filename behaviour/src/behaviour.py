@@ -5,20 +5,17 @@ Developed by: Sajjad Azami
 June 2016
 """
 
-import math
-from itertools import count
-
 import actionlib
 import roslib
 import rospy
 import smach
 import smach_ros
 import turtlesim
+import math
 from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import *
 from smach_ros import ServiceState
-from turtlesim.srv import *
 
 #####################################################
 ##################### VARIABLES #####################
@@ -183,7 +180,7 @@ class PassTask(smach.State):
 
 def main():
     rospy.init_node('behaviour')
-    listener_global_costmap()
+    # listener_global_costmap()
     sm = smach.StateMachine(
         outcomes=['SHUTDOWN'])
 
