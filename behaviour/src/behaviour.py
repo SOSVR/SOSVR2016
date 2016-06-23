@@ -12,6 +12,9 @@ import smach
 import smach_ros
 import turtlesim
 import math
+import tf
+from tf import TransformListener
+import random
 from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import *
@@ -21,7 +24,6 @@ from smach_ros import ServiceState
 ##################### VARIABLES #####################
 goals_list = []
 current_goal_status = ''
-global global_costmap
 
 count = 0
 goalstemp = []
@@ -36,6 +38,33 @@ for i in range(-10, 0):
 ##################### FUNCTIONS #####################
 #####################################################
 
+
+# get current position of robot using tf translation
+def get_current_position():
+    listener = tf.TransformListener()
+    rate = rospy.Rate(10.0)
+    flag = True
+    trans = 0
+    while flag and not rospy.is_shutdown():
+        try:
+            (trans, rot) = listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+            rospy.loginfo(trans)
+            flag = False
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+    return trans
+
+
+# random goal generator
+def get_random_goal():
+    x = random.uniform(-2.0, 2.0)
+    y = random.uniform(-2.0, 2.0)
+    w = random.uniform(-2.0, 2.0)
+    z = random.uniform(-2.0, 2.0)
+
+    return [x, y, 0, w, 0, 0, z]
+
+
 # subscriber method callback from /move_base/status
 def callback_goal_status(data):
     current_goal_status = data.status_list[0].text
@@ -49,7 +78,7 @@ def listener_goal_status():
 
 
 # subscriber method callback from /move_base/global_costmap/costmap
-def callback_global_costmap(data):
+def callback_global_costmap(self, data):
     global global_costmap
     global_costmap = data.data
 
@@ -97,6 +126,7 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
 ####################### STATES ######################
 #####################################################
 
+
 # define Init state
 class Init(smach.State):
     def __init__(self):
@@ -111,16 +141,17 @@ class Init(smach.State):
 class Explore(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
+        # rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap())
 
     def execute(self, userdata):
-        global count
+        # listener_global_costmap()
         rospy.loginfo('Executing state Explore')
-        # goal_list_temp = [1, 1, 0, 1, 0, 0, 1]  # TODO set right goals
-        goal_temp = goalstemp[count]  # TODO set right goals
-        goals_list.append(goal_temp)
-        move_to(goal_temp[0], goal_temp[1], goal_temp[2],
+        # goal_list_temp = [x, y, 0, w, 0, 0, x]  # TODO set right goals
+        goal_temp = get_random_goal()  # get random goal
+        goals_list.append(goal_temp)  # add goal to goal list(for further uses)
+        current_position = get_current_position()  # current translation of robot array[2]
+        move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
                 goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
-        count += 1
         return 'victimNotSpotted'
 
 
@@ -141,7 +172,7 @@ class InitRescue(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing state 2')
-        return 'outcome2'
+        return 'canRescue'
 
 
 # define Park state (Inner State)
@@ -180,7 +211,6 @@ class PassTask(smach.State):
 
 def main():
     rospy.init_node('behaviour')
-    # listener_global_costmap()
     sm = smach.StateMachine(
         outcomes=['SHUTDOWN'])
 
