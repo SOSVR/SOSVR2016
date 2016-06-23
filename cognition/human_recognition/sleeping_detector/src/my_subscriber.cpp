@@ -19,7 +19,7 @@ using namespace std;
 using namespace cv;
 //static string subscribeTopicName = "camera/rgb/image_raw";
 static string subscribeTopicName = "usb_cam/image_raw";
-static string humanPubTopicName = "sleepingDetector";
+static string humanPubTopicName = "human_detection_result";
 const double nmsTresh = 0.65;
 
 ros::Publisher humanPub;
