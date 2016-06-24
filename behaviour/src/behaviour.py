@@ -19,11 +19,14 @@ from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import *
 from smach_ros import ServiceState
+from human_detector.msg import detectedobjectsMsg
+import time
+import threading
 
 #####################################################
 ##################### VARIABLES #####################
 goals_list = []
-current_goal_status = ''
+global goal_result
 
 count = 0
 goalstemp = []
@@ -114,10 +117,10 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     sac.send_goal(goal)
 
     # finish
-    sac.wait_for_result()
+    # sac.wait_for_result()
 
     # print result
-    print sac.get_result()
+    goal_result = sac.get_result()
 
 
 ################### END FUNCTIONS ###################
@@ -137,10 +140,37 @@ class Init(smach.State):
         return 'toExplore'
 
 
+# define Init state
+class WaitForVictim(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
+        self.mutex = threading.Lock()
+        self.found_recieved = False
+        self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg, self.callback)
+
+    def callback(self, msg):
+        self.mutex.acquire()
+        if msg.found == 1:
+            self.found_recieved = True
+        self.mutex.release()
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing WaitForVictim')
+        for i in range(0, 300):
+            self.mutex.acquire()
+            if self.found_recieved:
+                # found recieved
+                return 'victimSpotted'
+            self.mutex.release()
+            time.sleep(.1)
+        # we didn't spotted victim in the 3 sec
+        return 'victimNotSpotted'
+
+
 # define Explore state
 class Explore(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
+        smach.State.__init__(self, outcomes=['goalPublished', 'goalNotPublished'])
         # rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap())
 
     def execute(self, userdata):
@@ -152,7 +182,7 @@ class Explore(smach.State):
         current_position = get_current_position()  # current translation of robot array[2]
         move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
                 goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
-        return 'victimNotSpotted'
+        return 'goalPublished'
 
 
 # define InitExplore state (Inner State)
@@ -171,7 +201,7 @@ class InitRescue(smach.State):
         smach.State.__init__(self, outcomes=['canRescue', 'cannotRescue'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state 2')
+        rospy.loginfo('Executing state InitRescue')
         return 'canRescue'
 
 
@@ -181,8 +211,8 @@ class Park(smach.State):
         smach.State.__init__(self, outcomes=['parkSuccessful', 'parkFail'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state 2')
-        return 'outcome2'
+        rospy.loginfo('Executing Park')
+        return 'parkSuccessful'
 
 
 # define Shutdown state (Inner State)
@@ -191,8 +221,8 @@ class Shutdown(smach.State):
         smach.State.__init__(self)
 
     def execute(self, userdata):
-        rospy.loginfo('Shutdown')
-        return 'outcome2'
+        rospy.loginfo('Executing Shutdown')
+        return 'SHUTDOWN'
 
 
 # define PassTask state (Inner State)
@@ -201,8 +231,8 @@ class PassTask(smach.State):
         smach.State.__init__(self, outcomes=['canContinue', 'cannotContinue'])
 
     def execute(self, userdata):
-        rospy.loginfo('PassTask')
-        return 'outcome2'
+        rospy.loginfo('Executing PassTask')
+        return 'canContinue'
 
 
 #################### END STATES #####################
@@ -221,11 +251,14 @@ def main():
         smach.StateMachine.add('INIT_RESCUE', InitRescue(),
                                transitions={'canRescue': 'PARK', 'cannotRescue': 'PASS_TASK'})
 
+        smach.StateMachine.add('WAIT_FOR_VICTIM', WaitForVictim(),
+                               transitions={'victimSpotted': 'PARK', 'victimNotSpotted': 'PASS_TASK'})
+
         smach.StateMachine.add('INIT_EXPLORE', InitExplore(),
                                transitions={'canExplore': 'EXPLORE', 'cannotExplore': 'SHUTDOWN'})
 
         smach.StateMachine.add('EXPLORE', Explore(),
-                               transitions={'victimSpotted': 'INIT_RESCUE', 'victimNotSpotted': 'INIT_EXPLORE'})
+                               transitions={'goalPublished': 'WAIT_FOR_VICTIM', 'goalNotPublished': 'INIT_EXPLORE'})
 
         smach.StateMachine.add('PARK', Park(),
                                transitions={'parkFail': 'PARK', 'parkSuccessful': 'SHUTDOWN'})
