@@ -25,15 +25,19 @@ import threading
 
 #####################################################
 ##################### VARIABLES #####################
-goals_list = []
-global goal_result
-global_costmap = 0
-
-count = 0
-goalstemp = []
-for i in range(-10, 0):
-    tmp = [i, i, 0, 1, 0, 0, 1]
-    goalstemp.append(tmp)
+goals_list = []  # goals given to robot will be appended to this
+current_goal_status = 0  # goal status
+# PENDING=0
+# ACTIVE=1
+# PREEMPTED=2
+# SUCCEEDED=3
+# ABORTED=4
+# REJECTED=5
+# PREEMPTING=6
+# RECALLING=7
+# RECALLED=8
+# LOST=9
+global_costmap = 0  # 2d array of costmap
 
 
 ################### END VARIABLES ###################
@@ -71,27 +75,24 @@ def get_random_goal():
 
 # subscriber method callback from /move_base/status
 def callback_goal_status(data):
-    current_goal_status = data.status_list[0].text
+    global current_goal_status
+    current_goal_status = data.status_list[len(data.status_list) - 1].status
 
 
 # subscriber method from /move_base/status
 def listener_goal_status():
-    rospy.init_node('goal_status_listener', anonymous=True)
     rospy.Subscriber("move_base/status", GoalStatusArray, callback_goal_status)
-    rospy.spin()
+
+
+# subscriber method callback from /move_base/global_costmap/costmap
+def callback_global_costmap(data):
+    global global_costmap
+    global_costmap = data.data
 
 
 # subscriber method from /move_base/global_costmap/costmap
 def listener_global_costmap():
-    # rospy.init_node('global_costmap_listener', anonymous=True)
     rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap)
-    # rospy.spin()
-
-
-# subscriber method callback from /move_base/global_costmap/costmap
-def callback_global_costmap(self, msg):
-    global global_costmap
-    global_costmap = msg.data
 
 
 # publishes goal on move_base/goal using SimpleActionClient
@@ -157,8 +158,12 @@ class WaitForVictim(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing WaitForVictim')
-        for i in range(0, 300):
+        global current_goal_status
+        listener_goal_status()
+        # 3:Goal Reached
+        while current_goal_status != 3:
             self.mutex.acquire()
+            listener_goal_status()
             if self.found_recieved:
                 # found recieved
                 return 'victimSpotted'
@@ -175,16 +180,18 @@ class Explore(smach.State):
         # rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap())
 
     def execute(self, userdata):
-        # listener_global_costmap()
         rospy.loginfo('Executing state Explore')
-        # goal_list_temp = [x, y, 0, w, 0, 0, x]  # TODO set right goals
-        goal_temp = get_random_goal()  # get random goal
-        # TODO get costmap[][] = -1
-        global global_costmap
+        # goal_list_temp = [x, y, 0, w, 0, 0, x]  # Goal Format
+
+        current_position = get_current_position()  # current translation of robot in an array[][]
+        global global_costmap  # global costmap is stored here in an array[][]
         listener_global_costmap()
-        rospy.loginfo(global_costmap)
+
+        goal_temp = get_random_goal()  # get random goal
+        # TODO set goals to nearest costmap[][] = -1
+        # TODO (Not Important for now) check for goal to make sure it is published using current_goal_status??
+
         goals_list.append(goal_temp)  # add goal to goal list(for further uses)
-        current_position = get_current_position()  # current translation of robot array[2]
         move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
                 goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
         return 'goalPublished'
