@@ -27,6 +27,7 @@ import threading
 ##################### VARIABLES #####################
 goals_list = []
 global goal_result
+global_costmap = 0
 
 count = 0
 goalstemp = []
@@ -80,17 +81,17 @@ def listener_goal_status():
     rospy.spin()
 
 
-# subscriber method callback from /move_base/global_costmap/costmap
-def callback_global_costmap(self, data):
-    global global_costmap
-    global_costmap = data.data
-
-
 # subscriber method from /move_base/global_costmap/costmap
 def listener_global_costmap():
     # rospy.init_node('global_costmap_listener', anonymous=True)
     rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap)
-    rospy.spin()
+    # rospy.spin()
+
+
+# subscriber method callback from /move_base/global_costmap/costmap
+def callback_global_costmap(self, msg):
+    global global_costmap
+    global_costmap = msg.data
 
 
 # publishes goal on move_base/goal using SimpleActionClient
@@ -178,6 +179,10 @@ class Explore(smach.State):
         rospy.loginfo('Executing state Explore')
         # goal_list_temp = [x, y, 0, w, 0, 0, x]  # TODO set right goals
         goal_temp = get_random_goal()  # get random goal
+        # TODO get costmap[][] = -1
+        global global_costmap
+        listener_global_costmap()
+        rospy.loginfo(global_costmap)
         goals_list.append(goal_temp)  # add goal to goal list(for further uses)
         current_position = get_current_position()  # current translation of robot array[2]
         move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
