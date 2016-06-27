@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sadegh/training/Color Detection & Object Tracking /colorTrackre/colorTracker.cpp
+stdio.h
+-
+stdlib.h
+-
+signal.h
+-
+iostream
+-
+opencv2/highgui/highgui.hpp
+/home/sadegh/training/Color Detection & Object Tracking /colorTrackre/opencv2/highgui/highgui.hpp
+opencv2/imgproc/imgproc.hpp
+/home/sadegh/training/Color Detection & Object Tracking /colorTrackre/opencv2/imgproc/imgproc.hpp
+
