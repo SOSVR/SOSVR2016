@@ -64,11 +64,38 @@ def get_current_position():
 
 
 # random goal generator
-def get_random_goal():
-    x = random.uniform(-2.0, 2.0)
-    y = random.uniform(-2.0, 2.0)
-    w = random.uniform(-2.0, 2.0)
-    z = random.uniform(-2.0, 2.0)
+# 0 for default
+# 1 for NW
+# 2 for NE
+# 3 for SW
+# 4 for SE
+def get_random_goal(type):
+    x, y, w, z = 0, 0, 0, 0
+    if type == 0:
+        x = random.uniform(-5.0, 5.0)
+        y = random.uniform(-5.0, 5.0)
+        w = random.uniform(-1.0, 1.0)
+        z = random.uniform(-1.0, 1.0)
+    if type == 1:  # NW
+        x = random.uniform(-5.0, 0)
+        y = random.uniform(0, 5.0)
+        w = random.uniform(-1.0, 1.0)
+        z = random.uniform(-1.0, 1.0)
+    if type == 2:  # NE
+        x = random.uniform(0.0, 5.0)
+        y = random.uniform(0.0, 5.0)
+        w = random.uniform(-1.0, 1.0)
+        z = random.uniform(-1.0, 1.0)
+    if type == 3:  # SW
+        x = random.uniform(-5.0, 0)
+        y = random.uniform(-5.0, 0)
+        w = random.uniform(-1.0, 1.0)
+        z = random.uniform(-1.0, 1.0)
+    if type == 4:  # SE
+        x = random.uniform(0, 5.0)
+        y = random.uniform(-5.0, 0)
+        w = random.uniform(-1.0, 1.0)
+        z = random.uniform(-1.0, 1.0)
 
     return [x, y, 0, w, 0, 0, z]
 
@@ -125,6 +152,14 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     goal_result = sac.get_result()
 
 
+# TODO to be completedd
+# publishes goal on move_base/goal using SimpleActionClient
+# inputs: position x, y, z, orientation w, x, y, z
+def frontier_exploration_publish_points():
+    # Simple Action Client
+    sac = actionlib.SimpleActionClient('move_base', ExploreTaskAction)
+
+
 ################### END FUNCTIONS ###################
 #####################################################
 
@@ -149,6 +184,7 @@ class WaitForVictim(smach.State):
         self.mutex = threading.Lock()
         self.found_recieved = False
         self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg, self.callback)
+        # self.subscriber = rospy.Subscriber("/temp", uint8, self.callback)
 
     def callback(self, msg):
         self.mutex.acquire()
@@ -158,18 +194,20 @@ class WaitForVictim(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing WaitForVictim')
-        global current_goal_status
-        listener_goal_status()
-        # 3:Goal Reached
-        while current_goal_status != 3:
-            self.mutex.acquire()
-            listener_goal_status()
-            if self.found_recieved:
-                # found recieved
-                return 'victimSpotted'
-            self.mutex.release()
-            time.sleep(.1)
-        # we didn't spotted victim in the 3 sec
+        # global current_goal_status
+        # listener_goal_status()
+        # # 3:Goal Reached
+        # while current_goal_status != 3:
+        #     self.mutex.acquire()
+        #     listener_goal_status()
+        #     if self.found_recieved:
+        #         # found recieved
+        #         return 'victimSpotted'
+        #     self.mutex.release()
+        #     time.sleep(.1)
+        # # we didn't spotted victim in the 3 sec
+        # return 'victimNotSpotted'
+        time.sleep(10)
         return 'victimNotSpotted'
 
 
@@ -187,7 +225,7 @@ class Explore(smach.State):
         global global_costmap  # global costmap is stored here in an array[][]
         listener_global_costmap()
 
-        goal_temp = get_random_goal()  # get random goal
+        goal_temp = get_random_goal(1)  # get random goal
         # TODO set goals to nearest costmap[][] = -1
         # TODO (Not Important for now) check for goal to make sure it is published using current_goal_status??
 
@@ -221,9 +259,25 @@ class InitRescue(smach.State):
 class Park(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['parkSuccessful', 'parkFail'])
+        self.mutex = threading.Lock()
+        self.victim_side = 0
+        self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg, self.callback)
+
+    def callback(self, msg):
+        self.mutex.acquire()
+        self.victim_side = msg.lr
+        self.mutex.release()
 
     def execute(self, userdata):
         rospy.loginfo('Executing Park')
+        current_position = get_current_position()  # current translation of robot in an array[][]
+        # goal_list_temp = [x, y, 0, w, 0, 0, x]  # Goal Format
+
+        goal_temp = [x, y, 0, w, 0, 0, x]
+        goals_list.append(goal_temp)  # add goal to goal list(for further uses)
+        move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
+                goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
+
         return 'parkSuccessful'
 
 
