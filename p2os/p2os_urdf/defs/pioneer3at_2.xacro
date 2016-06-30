@@ -16,13 +16,13 @@ name="pioneer3at">
   <xacro:include filename="$(find p2os_urdf)/defs/camera_rc2016.urdf.xacro"/>
 
 
-  <xacro:hokuyo_utm30lx name="laser" parent="base_link" ros_topic="scan" update_rate="30" ray_count="1040" min_angle="175" max_angle="-175" >
+  <xacro:hokuyo_utm30lx name="laser" parent="base_link2" ros_topic="scan2" update_rate="30" ray_count="1040" min_angle="175" max_angle="-175" >
     <origin xyz="0.13 0 0.32" rpy="0 0 0"/>
   </xacro:hokuyo_utm30lx>
 
 
 
-  <xacro:camera_rc2016 name="camera" parent="base_link" ros_topic="camera" update_rate="30" height="0.09">
+  <xacro:camera_rc2016 name="camera" parent="base_link2" ros_topic="camera2" update_rate="30" height="0.09">
     <origin xyz="0.13 0 0.32" rpy="0 0 0"/>
   </xacro:camera_rc2016>
 

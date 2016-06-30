@@ -79,9 +79,9 @@ public:
         : max_vx(0.6),
           max_vy(0.6), 
           max_vw(0.8),
-          max_vx_run(1.0),
-          max_vy_run(1.0),
-          max_vw_run(1.0),
+          max_vx_run(0.6),
+          max_vy_run(0.6),
+          max_vw_run(0.8),
           deadman_no_publish_(deadman_no_publish),
           running_(false)
     {/** Constructor for the teleop base**/}
