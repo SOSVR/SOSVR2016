@@ -15,7 +15,7 @@
   <!-- start Gazebo (TODO: add arguments) -->
 <!--  <include file="$(find gazebo_ros)/launch/empty_world.launch" />-->
 <include file="$(find gazebo_ros)/launch/empty_world.launch">
-<!--    <arg name="world_name" value="worlds/willowgarage.world"/> -->
+    <arg name="world_name" value="worlds/RC2016VRL_port1.world"/>
 <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable --> 
 
     <arg name="paused" value="false"/>
