@@ -2,6 +2,7 @@ import os
 import rospkg
 import rospy
 
+from std_msgs.msg import String
 from std_msgs.msg import Header
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
@@ -9,6 +10,8 @@ from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtGui import QWidget
 from python_qt_binding.QtGui import QIcon
+from threading import Thread
+from time import sleep
 
 class MyPlugin(Plugin):
 
@@ -48,7 +51,7 @@ class MyPlugin(Plugin):
 			self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 		# Add widget to the user interface
 
-		robot_names = ['robot1', 'robot2', 'robot3']
+		robot_names = ['robot1', 'robot2', 'robot3', 'robot4']
 		self._widget.robot_box.addItems(robot_names)
 
 		self._widget.controlUp.setIcon(QIcon.fromTheme('up'))
@@ -66,9 +69,22 @@ class MyPlugin(Plugin):
 
 		self._widget.buttonOn.clicked.connect(self.turnRobotOn)
 		self._widget.buttonOff.clicked.connect(self.turnRobotOff)
-
+		
+		ss_pub1 = rospy.Publisher('robot1/cmd_vel', Twist, queue_size=10)
+		ss_pub2 = rospy.Publisher('robot2/cmd_vel', Twist, queue_size=10)
+		ss_pub3 = rospy.Publisher('robot3/cmd_vel', Twist, queue_size=10)
+		ss_pub4 = rospy.Publisher('robot4/cmd_vel', Twist, queue_size=10)
+		pub1 = rospy.Publisher('robot1/manual', String, queue_size=10)
+		pub2 = rospy.Publisher('robot2/manual', String, queue_size=10)
+		pub3 = rospy.Publisher('robot3/manual', String, queue_size=10)
+		pub4 = rospy.Publisher('robot4/manual', String, queue_size=10)
+		self._pubs = [ss_pub1, ss_pub2, ss_pub3, ss_pub4, pub1, pub2, pub3, pub4]
+		
 		context.add_widget(self._widget)
 		self.subscribeToJoy()
+		thread = Thread(target = self.publishBehaviourTopic, args = ())
+    		thread.start()
+    		thread.join()
 
 	def checkJoyData(self, data):
 		if (data.buttons[7] == 1):
@@ -78,11 +94,11 @@ class MyPlugin(Plugin):
 			self._widget.textBrowser.append(str(self._widget.robot_box.currentText()))
 
 	def publishCmdVel(self, data):
-		pub = rospy.Publisher('{0}/cmd_vel'.format(str(self._widget.robot_box.currentText())), Twist, queue_size=10)
-		pub.publish(data)		
+		self.publishBehaviourTopic()
+		self._pubs[self.getNextIndex()-1].publish(data)
 
 	def getNextIndex(self):
-		return (int(str(self._widget.robot_box.currentText())[5:])) % 3
+		return (int(str(self._widget.robot_box.currentText())[5:])) % 4
 		
 	def shutdown_plugin(self):
 		# TODO unregister all publishers here
@@ -118,6 +134,45 @@ class MyPlugin(Plugin):
 	def subscribeToJoy(self):
 		rospy.Subscriber('cmd_vel', Twist, self.publishCmdVel)
 		rospy.Subscriber('joy', Joy, self.checkJoyData)
+
+	def publishBehaviourTopic(self):
+		"""while True
+			index = self.currentIndex
+			if (index == 1):
+				self._pubs[4].publish('1')
+			else:
+				self._pubs[4].publish('0')
+			if (index == 2):
+				self._pubs[5].publish('1')
+			else:
+				self._pubs[5].publish('0')
+			if (index == 3):
+				self._pubs[6].publish('1')
+			else:
+				self._pubs[6].publish('0')
+			if (index == 4):
+				self._pubs[7].publish('1')
+			else:
+				self._pubs[7].publish('0')
+			sleep(1)
+		"""
+		index = self.getNextIndex()
+		if (index == 1):
+			self._pubs[4].publish('1')
+		else:
+			self._pubs[4].publish('0')
+		if (index == 2):
+			self._pubs[5].publish('1')
+		else:
+			self._pubs[5].publish('0')
+		if (index == 3):
+			self._pubs[6].publish('1')
+		else:
+			self._pubs[6].publish('0')
+		if (index == 4):
+			self._pubs[7].publish('1')
+		else:
+			self._pubs[7].publish('0')
 
 	def turnRobotOff(self):
 		print('Turning {0} off'.format(str(self._widget.robot_box.currentText())))
