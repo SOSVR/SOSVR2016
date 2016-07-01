@@ -119,11 +119,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	//objs2 = non_max_suppression(objs2, nmsTresh);
        
        human_detector::detectedobjectsMsg osMsg;
-	osMsg.found = false;
+	osMsg.found = 0;
 	//int aria=0;
 	//int target=0;
 	if(objs1.size() > 0 || objs2.size() > 0){
-		osMsg.found = true;
+		osMsg.found = 1;
 	       /*for(int i=0; i<objs1.size(); i++){
 		  human_detector::objectMsg oMsg;
 		  oMsg.x = objs1[i].x;
