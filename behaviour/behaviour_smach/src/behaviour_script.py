@@ -5,23 +5,29 @@ Developed by: Sajjad Azami
 June 2016
 """
 
+import math
+import random
+import sys
+import threading
+import time
+
 import actionlib
 import roslib
 import rospy
 import smach
 import smach_ros
-import turtlesim
-import math
 import tf
-from tf import TransformListener
-import random
+import turtlesim
 from actionlib_msgs.msg import GoalStatusArray
-from nav_msgs.msg import OccupancyGrid
+from human_detector.msg import *
 from move_base_msgs.msg import *
+from behaviour.msg import *
+from nav_msgs.msg import OccupancyGrid
 from smach_ros import ServiceState
-from human_detector.msg import detectedobjectsMsg
-import time
-import threading
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
+from std_msgs.msg import Header
+from tf import TransformListener
 
 #####################################################
 ##################### VARIABLES #####################
@@ -38,6 +44,8 @@ current_goal_status = 0  # goal status
 # RECALLED=8
 # LOST=9
 global_costmap = 0  # 2d array of costmap
+robot_namespace = ''
+current_direction = 0  # current direction of robot explore(0-4)
 
 
 ################### END VARIABLES ###################
@@ -55,12 +63,31 @@ def get_current_position():
     trans = 0
     while flag and not rospy.is_shutdown():
         try:
-            (trans, rot) = listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+            (trans, rot) = listener.lookupTransform((robot_namespace + '/map'), (robot_namespace + '/base_link'),
+                                                    rospy.Time(0))
             rospy.loginfo(trans)
             flag = False
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
     return trans
+
+
+# subscriber method callback from /move_base/status
+def callback_direction_status(data):
+    global current_direction
+    current_direction = data.direction
+    return current_direction
+
+
+# subscriber method from /move_base/status
+def listener_direction_status():
+    rospy.Subscriber((robot_namespace + "/direction_status"), DirectionStatus, callback_direction_status)
+    return
+
+
+# get current position of robot using tf translation
+def get_current_direction():
+    listener_direction_status()
 
 
 # random goal generator
@@ -69,33 +96,33 @@ def get_current_position():
 # 2 for NE
 # 3 for SW
 # 4 for SE
-def get_random_goal(type):
+def get_random_goal(exp_type):
     x, y, w, z = 0, 0, 0, 0
-    if type == 0:
+    if exp_type == 0:
         x = random.uniform(-5.0, 5.0)
         y = random.uniform(-5.0, 5.0)
-        w = random.uniform(-1.0, 1.0)
-        z = random.uniform(-1.0, 1.0)
-    if type == 1:  # NW
+        w = 1
+        z = 1
+    if exp_type == 1:  # NW
         x = random.uniform(-5.0, 0)
         y = random.uniform(0, 5.0)
-        w = random.uniform(-1.0, 1.0)
-        z = random.uniform(-1.0, 1.0)
-    if type == 2:  # NE
+        w = 1
+        z = 1
+    if exp_type == 2:  # NE
         x = random.uniform(0.0, 5.0)
         y = random.uniform(0.0, 5.0)
-        w = random.uniform(-1.0, 1.0)
-        z = random.uniform(-1.0, 1.0)
-    if type == 3:  # SW
+        w = 1
+        z = 1
+    if exp_type == 3:  # SW
         x = random.uniform(-5.0, 0)
         y = random.uniform(-5.0, 0)
-        w = random.uniform(-1.0, 1.0)
-        z = random.uniform(-1.0, 1.0)
-    if type == 4:  # SE
+        w = 1
+        z = 1
+    if exp_type == 4:  # SE
         x = random.uniform(0, 5.0)
         y = random.uniform(-5.0, 0)
-        w = random.uniform(-1.0, 1.0)
-        z = random.uniform(-1.0, 1.0)
+        w = 1
+        z = 1
 
     return [x, y, 0, w, 0, 0, z]
 
@@ -108,7 +135,7 @@ def callback_goal_status(data):
 
 # subscriber method from /move_base/status
 def listener_goal_status():
-    rospy.Subscriber("move_base/status", GoalStatusArray, callback_goal_status)
+    rospy.Subscriber((robot_namespace + "move_base/status"), GoalStatusArray, callback_goal_status)
 
 
 # subscriber method callback from /move_base/global_costmap/costmap
@@ -119,14 +146,14 @@ def callback_global_costmap(data):
 
 # subscriber method from /move_base/global_costmap/costmap
 def listener_global_costmap():
-    rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, callback_global_costmap)
+    rospy.Subscriber((robot_namespace + "/move_base/global_costmap/costmap"), OccupancyGrid, callback_global_costmap)
 
 
 # publishes goal on move_base/goal using SimpleActionClient
 # inputs: position x, y, z, orientation w, x, y, z
 def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     # Simple Action Client
-    sac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+    sac = actionlib.SimpleActionClient((robot_namespace + 'move_base'), MoveBaseAction)
 
     # create goal
     goal = MoveBaseGoal()
@@ -136,7 +163,7 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     goal.target_pose.pose.position.y = pos_y
     goal.target_pose.pose.orientation.w = ornt_w
     goal.target_pose.pose.orientation.z = ornt_z
-    goal.target_pose.header.frame_id = 'odom'
+    goal.target_pose.header.frame_id = (robot_namespace + 'odom')
     goal.target_pose.header.stamp = rospy.Time.now()
 
     # start listener
@@ -149,7 +176,25 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     # sac.wait_for_result()
 
     # print result
-    goal_result = sac.get_result()
+    # goal_result = sac.get_result()
+
+    # Publisher on move_base_simple/goal
+    # header = Header()
+    # header.frame_id = 'map'
+    # header.stamp = rospy.Time.now()
+    #
+    # pose = Pose()
+    # pose.position.x = pos_x
+    # pose.position.y = pos_y
+    # pose.orientation.w = ornt_w
+    # pose.orientation.z = ornt_z
+    #
+    # pose_stamped = PoseStamped()
+    # pose_stamped.header = header
+    # pose_stamped.pose = pose
+    # pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
+    # rate = rospy.Rate(100)  # 100hz
+    # pub.publish(pose_stamped)
 
 
 # TODO to be completedd
@@ -157,7 +202,7 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
 # inputs: position x, y, z, orientation w, x, y, z
 def frontier_exploration_publish_points():
     # Simple Action Client
-    sac = actionlib.SimpleActionClient('move_base', ExploreTaskAction)
+    sac = actionlib.SimpleActionClient((robot_namespace + 'move_base'), ExploreTaskAction)
 
 
 ################### END FUNCTIONS ###################
@@ -173,7 +218,8 @@ class Init(smach.State):
         smach.State.__init__(self, outcomes=['toExplore', 'toRescue'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing Init')
+        rospy.loginfo('Executing Init With Namespace :')
+        rospy.loginfo(robot_namespace)
         return 'toExplore'
 
 
@@ -183,7 +229,8 @@ class WaitForVictim(smach.State):
         smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
         self.mutex = threading.Lock()
         self.found_recieved = False
-        self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg, self.callback)
+        self.subscriber = rospy.Subscriber((robot_namespace + "/human_detection_result"), detectedobjectsMsg,
+                                           self.callback)
         # self.subscriber = rospy.Subscriber("/temp", uint8, self.callback)
 
     def callback(self, msg):
@@ -222,10 +269,12 @@ class Explore(smach.State):
         # goal_list_temp = [x, y, 0, w, 0, 0, x]  # Goal Format
 
         current_position = get_current_position()  # current translation of robot in an array[][]
+        # current_direction = get_current_direction()
         global global_costmap  # global costmap is stored here in an array[][]
-        listener_global_costmap()
+        # listener_global_costmap()
 
-        goal_temp = get_random_goal(1)  # get random goal
+        # goal_temp = get_random_goal(current_direction)  # get random goal
+        goal_temp = get_random_goal(2)  # get random goal
         # TODO set goals to nearest costmap[][] = -1
         # TODO (Not Important for now) check for goal to make sure it is published using current_goal_status??
 
@@ -261,7 +310,8 @@ class Park(smach.State):
         smach.State.__init__(self, outcomes=['parkSuccessful', 'parkFail'])
         self.mutex = threading.Lock()
         self.victim_side = 0
-        self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg, self.callback)
+        self.subscriber = rospy.Subscriber((robot_namespace + "/human_detection_result"), detectedobjectsMsg,
+                                           self.callback)
 
     def callback(self, msg):
         self.mutex.acquire()
@@ -309,7 +359,9 @@ def main():
     rospy.init_node('behaviour')
     sm = smach.StateMachine(
         outcomes=['SHUTDOWN'])
-
+    global robot_namespace
+    if len(sys.argv) > 1:
+        robot_namespace = sys.argv[1]
     with sm:
         smach.StateMachine.add('INIT', Init(),
                                transitions={'toRescue': 'INIT_RESCUE', 'toExplore': 'INIT_EXPLORE'})
@@ -332,7 +384,7 @@ def main():
         smach.StateMachine.add('PASS_TASK', PassTask(),
                                transitions={'canContinue': 'INIT_EXPLORE', 'cannotContinue': 'SHUTDOWN'})
 
-        sis = smach_ros.IntrospectionServer('Behavior', sm, '/SM_ROOT')
+        sis = smach_ros.IntrospectionServer('Behavior', sm, (robot_namespace + '/SM_ROOT'))
         sis.start()
 
         # Execute SMACH plan
