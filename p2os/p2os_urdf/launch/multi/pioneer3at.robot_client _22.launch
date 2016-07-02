@@ -11,7 +11,7 @@
   <include file="$(find p2os_urdf)/launch/multi/pioneer3at.robot_Spawn-22.launch">
     <arg name="robot_name" value="robot2"/>
     <arg name="pose_x" value="-1"/> 
-    <arg name="pose_y" value="-2"/>
+    <arg name="pose_y" value="11"/>
     <arg name="pose_yaw" default="1.57"/>
   </include>
 

@@ -9,11 +9,11 @@
 <!-- Chassis -->
 	<link name="base_link">
 		<inertial>
-			<mass value="10.0"/>
-			<origin xyz="0 0 0.177"/>
-			<inertia ixx="0.3338" ixy="0.0" ixz="0.0"
-				 iyy="0.4783" iyz="0.0"
-				 izz="0.3338"/>
+		  <mass value="14.0"/>
+		  <origin xyz="0 0 0.177"/>
+		  <inertia ixx="0.14711667" ixy="0.0" ixz="0.0"
+			iyy="0.334951167" iyz="0.0"
+			izz="0.3978345"/>
 		</inertial>
 		<visual name="base_visual">
 			<origin xyz="0 0 0.177" rpy="0 0 0"/>
@@ -38,11 +38,11 @@
 <!-- Top -->
 	<link name="top_plate">
 		<inertial>
-			<mass value="0.1"/>
+			<mass value="3.0"/>
 			<origin xyz="-0.025 0 -0.223"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0"
- 				izz="1.0"/>
+			  <inertia ixx="0.14711667" ixy="0.0" ixz="0.0"
+				iyy="0.334951167" iyz="0.0"
+				izz="0.3978345"/>
 		</inertial>
 		<visual name="base_visual">
 			<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -72,10 +72,11 @@
 <!-- Front + Back Sonar -->
 	<link name="front_sonar">
 		<inertial>
-			<mass value="0.1"/>
+			<mass value="2.0"/>
 			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+			  <inertia ixx="0.14711667" ixy="0.0" ixz="0.0"
+				iyy="0.334951167" iyz="0.0"
+				izz="0.3978345"/>
 		</inertial>
 		<visual name="base_visual">
 			<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -105,10 +106,11 @@
 
 	<link name="back_sonar">
 		<inertial>
-			<mass value="0.1"/>
+			<mass value="2.0"/>
 			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+			  <inertia ixx="0.14711667" ixy="0.0" ixz="0.0"
+				iyy="0.334951167" iyz="0.0"
+				izz="0.3978345"/>
 		</inertial>
 		<visual name="base_visual">
 			<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -140,10 +142,10 @@
 <xacro:macro name="p3at_front" params="suffix reflect">
 	<link name="p3at_front_${suffix}_axle">
 		<inertial>
-			<mass value="0.1"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+      		  <mass value="1.5"/>	
+				<origin xyz="0 0 0"/>
+				<inertia ixx="0.005240625" ixy="0" ixz="0"
+				iyy="0.005240625" iyz="0" izz="0.009075"/>
   	 	</inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -173,10 +175,10 @@
 
 	<link name="p3at_front_${suffix}_hub">
 		<inertial>
-			<mass value="0.1"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+		  <mass value="1.5"/>	
+		  <origin xyz="0 0 0"/>
+		  <inertia ixx="0.005240625" ixy="0" ixz="0"
+			iyy="0.005240625" iyz="0" izz="0.009075"/>
   	 	</inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -206,10 +208,10 @@
 
 	<link name="p3at_front_${suffix}_wheel">
 		<inertial>
-			<mass value="0.5"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="0.012411765597" ixy="0" ixz="0"
-         iyy="0.015218160428" iyz="0" izz="0.011763977943"/>
+		  <mass value="1.5"/>	
+		  <origin xyz="0 0 0"/>
+		  <inertia ixx="0.005240625" ixy="0" ixz="0"
+			iyy="0.005240625" iyz="0" izz="0.009075"/>
       </inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -246,10 +248,10 @@
 <xacro:macro name="p3at_back" params="suffix reflect">
 	<link name="p3at_back_${suffix}_axle">
 		<inertial>
-			<mass value="0.1"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+		  <mass value="1.5"/>	
+		  <origin xyz="0 0 0"/>
+		  <inertia ixx="0.005240625" ixy="0" ixz="0"
+			iyy="0.005240625" iyz="0" izz="0.009075"/>
   	 	</inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -280,10 +282,10 @@
 
 	<link name="p3at_back_${suffix}_hub">
 		<inertial>
-			<mass value="0.1"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="1.0" ixy="0.0" ixz="0.0"
-				 iyy="1.0" iyz="0.0" izz="1.0"/>
+		  <mass value="1.5"/>	
+		  <origin xyz="0 0 0"/>
+		  <inertia ixx="0.005240625" ixy="0" ixz="0"
+			iyy="0.005240625" iyz="0" izz="0.009075"/>
   	 	</inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -311,10 +313,10 @@
 
 	<link name="p3at_back_${suffix}_wheel">
 		<inertial>
-			<mass value="0.5"/>
-			<origin xyz="0 0 0"/>
-			<inertia ixx="0.012411765597" ixy="0" ixz="0"
-         iyy="0.015218160428" iyz="0" izz="0.011763977943"/>
+		  <mass value="1.5"/>	
+		  <origin xyz="0 0 0"/>
+		  <inertia ixx="0.005240625" ixy="0" ixz="0"
+			iyy="0.005240625" iyz="0" izz="0.009075"/>
       </inertial>
 	<visual name="base_visual">
 		<origin xyz="0 0 0" rpy="0 0 0"/>
