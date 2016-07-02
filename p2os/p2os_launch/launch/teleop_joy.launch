@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 	<!-- run the teleop node to send movement velocities to the pioneer -->
 	<param name="axis_vx" type="int" value="1" />
@@ -10,5 +11,7 @@
 	</node>
 
 	<!-- run a joy node to control the pioneer -->
-	<node pkg="joy" type="joy_node" name="pioneer_joy_controller" />
+	<node pkg="joy" type="joy_node" name="pioneer_joy_controller">
+	<remap from="cmd_vel" to="robot1/cmd_vel" />
+	</node>
 </launch>

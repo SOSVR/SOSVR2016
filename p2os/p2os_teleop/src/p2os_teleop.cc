@@ -135,7 +135,7 @@ public:
         ROS_INFO("run_button: %d", run_button);
         ROS_DEBUG("joy_msg_timeout: %f\n", joy_msg_timeout);
         
-        vel_pub_ = n_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+        vel_pub_ = n_.advertise<geometry_msgs::Twist>("/robot1/cmd_vel", 1);
         passthrough_sub_ = n_.subscribe( "des_vel", 10, &TeleopBase::passthrough_cb, this );
         joy_sub_ = n_.subscribe("joy", 10, &TeleopBase::joy_cb, this);
         
