@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="use_sim_time" value="true"/>
+  <arg name="paused" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="verbose" default="true"/>
+<!--  <arg name="world_name" default="USARGazebo.world"/> -->
+
+  <!-- Launch gazebo -->
+  
+  <include file="$(find p2os_urdf)/launch/multi/pioneer3at.robot_Spawn-23.launch">
+    
+    <arg name="robot_name" value="robot3"/>
+    <arg name="pose_x" value="2"/> 
+    <arg name="pose_y" value="-2"/>
+    <arg name="pose_yaw" default="0"/>
+  </include>
+
+
+
+</launch>

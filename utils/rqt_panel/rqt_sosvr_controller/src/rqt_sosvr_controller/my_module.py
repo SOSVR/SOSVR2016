@@ -2,12 +2,16 @@ import os
 import rospkg
 import rospy
 
+from std_msgs.msg import Header
+from sensor_msgs.msg import Joy
+from geometry_msgs.msg import Twist
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtGui import QWidget
 from python_qt_binding.QtGui import QIcon
 
 class MyPlugin(Plugin):
+
 	def __init__(self, context):
 		super(MyPlugin, self).__init__(context)
 		# Give QObjects reasonable names
@@ -44,7 +48,7 @@ class MyPlugin(Plugin):
 			self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 		# Add widget to the user interface
 
-		robot_names = ['SOSVR Bot 1', 'SOSVR Bot 2']
+		robot_names = ['robot1', 'robot2', 'robot3']
 		self._widget.robot_box.addItems(robot_names)
 
 		self._widget.controlUp.setIcon(QIcon.fromTheme('up'))
@@ -64,7 +68,22 @@ class MyPlugin(Plugin):
 		self._widget.buttonOff.clicked.connect(self.turnRobotOff)
 
 		context.add_widget(self._widget)
-	
+		self.subscribeToJoy()
+
+	def checkJoyData(self, data):
+		if (data.buttons[7] == 1):
+			nextIndex = self.getNextIndex()
+			self._widget.robot_box.setCurrentIndex(nextIndex)
+			#self._widget.textBrowser.moveCursor(QtGui.QTextCursor.End)
+			self._widget.textBrowser.append(str(self._widget.robot_box.currentText()))
+
+	def publishCmdVel(self, data):
+		pub = rospy.Publisher('{0}/cmd_vel'.format(str(self._widget.robot_box.currentText())), Twist, queue_size=10)
+		pub.publish(data)		
+
+	def getNextIndex(self):
+		return (int(str(self._widget.robot_box.currentText())[5:])) % 3
+		
 	def shutdown_plugin(self):
 		# TODO unregister all publishers here
 		pass
@@ -80,7 +99,7 @@ class MyPlugin(Plugin):
 		# Comment in to signal that the plugin has a way to configure
 		# This will enable a setting button (gear icon) in each dock widget title bar
 		# Usually used to open a modal configuration dialog
-	
+
 	def controlSignalUp(self):
 		print('Directing {0} to up'.format(str(self._widget.robot_box.currentText())))
 
@@ -95,7 +114,11 @@ class MyPlugin(Plugin):
 
 	def turnRobotOn(self):
 		print('Turning {0} on'.format(str(self._widget.robot_box.currentText())))
+		
+	def subscribeToJoy(self):
+		rospy.Subscriber('cmd_vel', Twist, self.publishCmdVel)
+		rospy.Subscriber('joy', Joy, self.checkJoyData)
 
 	def turnRobotOff(self):
 		print('Turning {0} off'.format(str(self._widget.robot_box.currentText())))
-
+	

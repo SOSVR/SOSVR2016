@@ -37,6 +37,7 @@
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 #include <kdl_parser/kdl_parser.hpp>
+//#include <tf.h>
 
 int main( int argc, char* argv[] )
 {
@@ -47,7 +48,8 @@ int main( int argc, char* argv[] )
 
  	tf::TransformBroadcaster broadcaster;
     ros::Rate loop_rate(30);
-
+    //string tf_prefix = getTFPrefix();
+    //ROS_DEBUG("tf_prefix -------> %s",tf_prefix);
     // message declarations
     geometry_msgs::TransformStamped odom_trans;
     sensor_msgs::JointState joint_state;
