@@ -2,10 +2,7 @@ import os
 import rospkg
 import rospy
 
-<<<<<<< HEAD
-=======
 from std_msgs.msg import String
->>>>>>> 6a1e55aad6941e13bf1d0b76035f89bbb06c359f
 from std_msgs.msg import Header
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
@@ -54,11 +51,7 @@ class MyPlugin(Plugin):
 			self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 		# Add widget to the user interface
 
-<<<<<<< HEAD
-		robot_names = ['robot1', 'robot2', 'robot3']
-=======
 		robot_names = ['robot1', 'robot2', 'robot3', 'robot4']
->>>>>>> 6a1e55aad6941e13bf1d0b76035f89bbb06c359f
 		self._widget.robot_box.addItems(robot_names)
 
 		self._widget.controlUp.setIcon(QIcon.fromTheme('up'))
@@ -89,12 +82,9 @@ class MyPlugin(Plugin):
 		
 		context.add_widget(self._widget)
 		self.subscribeToJoy()
-<<<<<<< HEAD
-=======
 		thread = Thread(target = self.publishBehaviourTopic, args = ())
     		thread.start()
     		thread.join()
->>>>>>> 6a1e55aad6941e13bf1d0b76035f89bbb06c359f
 
 	def checkJoyData(self, data):
 		if (data.buttons[7] == 1):
@@ -104,19 +94,11 @@ class MyPlugin(Plugin):
 			self._widget.textBrowser.append(str(self._widget.robot_box.currentText()))
 
 	def publishCmdVel(self, data):
-<<<<<<< HEAD
-		pub = rospy.Publisher('{0}/cmd_vel'.format(str(self._widget.robot_box.currentText())), Twist, queue_size=10)
-		pub.publish(data)		
-
-	def getNextIndex(self):
-		return (int(str(self._widget.robot_box.currentText())[5:])) % 3
-=======
 		self.publishBehaviourTopic()
 		self._pubs[self.getNextIndex()-1].publish(data)
 
 	def getNextIndex(self):
 		return (int(str(self._widget.robot_box.currentText())[5:])) % 4
->>>>>>> 6a1e55aad6941e13bf1d0b76035f89bbb06c359f
 		
 	def shutdown_plugin(self):
 		# TODO unregister all publishers here
@@ -152,8 +134,6 @@ class MyPlugin(Plugin):
 	def subscribeToJoy(self):
 		rospy.Subscriber('cmd_vel', Twist, self.publishCmdVel)
 		rospy.Subscriber('joy', Joy, self.checkJoyData)
-<<<<<<< HEAD
-=======
 
 	def publishBehaviourTopic(self):
 		"""while True
@@ -193,7 +173,6 @@ class MyPlugin(Plugin):
 			self._pubs[7].publish('1')
 		else:
 			self._pubs[7].publish('0')
->>>>>>> 6a1e55aad6941e13bf1d0b76035f89bbb06c359f
 
 	def turnRobotOff(self):
 		print('Turning {0} off'.format(str(self._widget.robot_box.currentText())))
