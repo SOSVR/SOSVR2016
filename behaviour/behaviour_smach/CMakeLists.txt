@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(behaviour)
+project(behaviour_smach)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -8,7 +8,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  genmsg
+  message_generation
 )
+
+# add the message
+add_message_files(DIRECTORY msg
+   FILES DirectionStatus.msg
+)
+generate_messages(DEPENDENCIES std_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -101,8 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES behaviour
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES behaviour_smach
+  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,17 +126,17 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(behaviour
-#   src/${PROJECT_NAME}/behaviour.cpp
+# add_library(behaviour_smach
+#   src/${PROJECT_NAME}/behaviour_smach.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(behaviour ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(behaviour_smach ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(behaviour_node src/behaviour_node.cpp)
+# add_executable(behaviour_smach_node src/behaviour_smach_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

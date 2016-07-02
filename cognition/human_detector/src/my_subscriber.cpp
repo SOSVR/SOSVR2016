@@ -16,14 +16,14 @@
 
 using namespace std;
 using namespace cv;
-//static string subscribeTopicName = "camera/rgb/image_raw";
-static string subscribeTopicName = "usb_cam/image_raw";
+//static string subscribeTopicName = "camera/camera";
+//static string subscribeTopicName = "usb_cam/image_raw";
 static string humanPubTopicName = "human_detection_result";
 const double nmsTresh = 0.65;
 
 ros::Publisher humanPub;
 string path = ros::package::getPath("human_detector");
-HOGDescriptor sleephog = *new HOGDescriptor(path+ "/xml/cvHOGClassifier.yaml");
+//HOGDescriptor sleephog = *new HOGDescriptor(path+ "/xml/cvHOGClassifier.yaml");
 //HOGDescriptor pdestrianhog = *new HOGDescriptor(path+ "/xml/cvHOGClassifier2.yaml");
 HOGDescriptor pdestrianhog;
 
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
 {
   //ROS_INFO("main");
   ros::init(argc, argv, "image_listener");
+  static string subscribeTopicName(argv[1]);
   pdestrianhog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
   ros::NodeHandle nh;
 
@@ -110,20 +111,21 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
        Mat gray_frame;
        cvtColor( frame, gray_frame, CV_BGR2GRAY );
        //equalizeHist( gray_frame, gray_frame );
-       vector<Rect> objs1;
+       //vector<Rect> objs1;
        vector<Rect> objs2;
-       sleephog.detectMultiScale(gray_frame, objs1, 0.995770812034607, Size(8, 8), Size(8, 8), 1.05, 2); 
+       //sleephog.detectMultiScale(gray_frame, objs1, 0.995770812034607, Size(8, 8), Size(8, 8), 1.05, 2); 
        //pdestrianhog.detectMultiScale(gray_frame, objs2, 0.817382812500000, Size(8, 8), Size(8, 8), 1.05, 2);
        pdestrianhog.detectMultiScale(gray_frame, objs2, 0.0, cv::Size(8, 8), cv::Size(0,0), 1.05, 4);  
 	//objs1 = non_max_suppression(objs1, nmsTresh);
 	//objs2 = non_max_suppression(objs2, nmsTresh);
        
        human_detector::detectedobjectsMsg osMsg;
-	osMsg.found = false;
+	osMsg.found = 0;
 	//int aria=0;
 	//int target=0;
-	if(objs1.size() > 0 || objs2.size() > 0){
-		osMsg.found = true;
+	//if(objs1.size() > 0 || objs2.size() > 0){
+	if(objs2.size() > 0){
+		osMsg.found = 1;
 	       /*for(int i=0; i<objs1.size(); i++){
 		  human_detector::objectMsg oMsg;
 		  oMsg.x = objs1[i].x;
