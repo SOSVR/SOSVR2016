@@ -19,6 +19,7 @@ import smach_ros
 import tf
 import turtlesim
 from actionlib_msgs.msg import GoalStatusArray
+from actionlib_msgs.msg import GoalID
 from human_detector.msg import *
 from move_base_msgs.msg import *
 from behaviour.msg import *
@@ -45,7 +46,7 @@ current_goal_status = 0  # goal status
 # LOST=9
 global_costmap = 0  # 2d array of costmap
 robot_namespace = ''
-current_direction = 0  # current direction of robot explore(0-4)
+current_direction = 4  # current direction of robot explore(0-4)
 
 
 ################### END VARIABLES ###################
@@ -53,6 +54,15 @@ current_direction = 0  # current direction of robot explore(0-4)
 
 ##################### FUNCTIONS #####################
 #####################################################
+
+# return the x size of the map
+def get_map_x():
+    return 50
+
+
+# return the y size of the map
+def get_map_y():
+    return 100
 
 
 # get current position of robot using tf translation
@@ -63,7 +73,7 @@ def get_current_position():
     trans = 0
     while flag and not rospy.is_shutdown():
         try:
-            (trans, rot) = listener.lookupTransform((robot_namespace + '/map'), (robot_namespace + '/base_link'),
+            (trans, rot) = listener.lookupTransform('/map', (robot_namespace + '/base_link'),
                                                     rospy.Time(0))
             rospy.loginfo(trans)
             flag = False
@@ -94,33 +104,33 @@ def get_current_direction():
 # 0 for default
 # 1 for NW
 # 2 for NE
-# 3 for SW
-# 4 for SE
+# 3 for SE
+# 4 for SW
 def get_random_goal(exp_type):
     x, y, w, z = 0, 0, 0, 0
     if exp_type == 0:
-        x = random.uniform(-5.0, 5.0)
-        y = random.uniform(-5.0, 5.0)
+        x = random.uniform(-10.0, 10.0)
+        y = random.uniform(-10.0, 10.0)
         w = 1
         z = 1
     if exp_type == 1:  # NW
-        x = random.uniform(-5.0, 0)
-        y = random.uniform(0, 5.0)
+        x = random.uniform(-10.0, 0)
+        y = random.uniform(0, 10.0)
         w = 1
         z = 1
     if exp_type == 2:  # NE
-        x = random.uniform(0.0, 5.0)
-        y = random.uniform(0.0, 5.0)
+        x = random.uniform(0.0, 10.0)
+        y = random.uniform(0.0, 10.0)
         w = 1
         z = 1
-    if exp_type == 3:  # SW
-        x = random.uniform(-5.0, 0)
-        y = random.uniform(-5.0, 0)
+    if exp_type == 3:  # SE
+        x = random.uniform(0, 10.0)
+        y = random.uniform(-10.0, 0)
         w = 1
         z = 1
-    if exp_type == 4:  # SE
-        x = random.uniform(0, 5.0)
-        y = random.uniform(-5.0, 0)
+    if exp_type == 4:  # SW
+        x = random.uniform(-10.0, 0)
+        y = random.uniform(-10.0, 0)
         w = 1
         z = 1
 
@@ -135,7 +145,7 @@ def callback_goal_status(data):
 
 # subscriber method from /move_base/status
 def listener_goal_status():
-    rospy.Subscriber((robot_namespace + "move_base/status"), GoalStatusArray, callback_goal_status)
+    rospy.Subscriber((robot_namespace + "/move_base/status"), GoalStatusArray, callback_goal_status)
 
 
 # subscriber method callback from /move_base/global_costmap/costmap
@@ -153,7 +163,7 @@ def listener_global_costmap():
 # inputs: position x, y, z, orientation w, x, y, z
 def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     # Simple Action Client
-    sac = actionlib.SimpleActionClient((robot_namespace + 'move_base'), MoveBaseAction)
+    sac = actionlib.SimpleActionClient((robot_namespace + '/move_base'), MoveBaseAction)
 
     # create goal
     goal = MoveBaseGoal()
@@ -163,7 +173,7 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
     goal.target_pose.pose.position.y = pos_y
     goal.target_pose.pose.orientation.w = ornt_w
     goal.target_pose.pose.orientation.z = ornt_z
-    goal.target_pose.header.frame_id = (robot_namespace + 'odom')
+    goal.target_pose.header.frame_id = (robot_namespace + '/odom')
     goal.target_pose.header.stamp = rospy.Time.now()
 
     # start listener
@@ -202,7 +212,7 @@ def move_to(pos_x, pos_y, pos_z, ornt_w, ornt_x, ornt_y, ornt_z):
 # inputs: position x, y, z, orientation w, x, y, z
 def frontier_exploration_publish_points():
     # Simple Action Client
-    sac = actionlib.SimpleActionClient((robot_namespace + 'move_base'), ExploreTaskAction)
+    sac = actionlib.SimpleActionClient((robot_namespace + '/move_base'), ExploreTaskAction)
 
 
 ################### END FUNCTIONS ###################
@@ -229,7 +239,7 @@ class WaitForVictim(smach.State):
         smach.State.__init__(self, outcomes=['victimSpotted', 'victimNotSpotted'])
         self.mutex = threading.Lock()
         self.found_recieved = False
-        self.subscriber = rospy.Subscriber((robot_namespace + "/human_detection_result"), detectedobjectsMsg,
+        self.subscriber = rospy.Subscriber("/human_detection_result", detectedobjectsMsg,
                                            self.callback)
         # self.subscriber = rospy.Subscriber("/temp", uint8, self.callback)
 
@@ -254,7 +264,15 @@ class WaitForVictim(smach.State):
         #     time.sleep(.1)
         # # we didn't spotted victim in the 3 sec
         # return 'victimNotSpotted'
-        time.sleep(10)
+        for i in range(0, 100):
+            self.mutex.acquire()
+            # rospy.loginfo(self.found_recieved)
+            if self.found_recieved:
+                # found recieved
+                return 'victimSpotted'
+            self.mutex.release()
+            time.sleep(.1)
+        # we didn't spotted victim in the 3 sec
         return 'victimNotSpotted'
 
 
@@ -267,20 +285,25 @@ class Explore(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing state Explore')
         # goal_list_temp = [x, y, 0, w, 0, 0, x]  # Goal Format
-
         current_position = get_current_position()  # current translation of robot in an array[][]
         # current_direction = get_current_direction()
         global global_costmap  # global costmap is stored here in an array[][]
         # listener_global_costmap()
-
-        # goal_temp = get_random_goal(current_direction)  # get random goal
-        goal_temp = get_random_goal(2)  # get random goal
+        global current_direction
+        goal_temp = get_random_goal(current_direction)  # get random goal
+        # goal_temp = get_random_goal(2)  # get random goal
         # TODO set goals to nearest costmap[][] = -1
         # TODO (Not Important for now) check for goal to make sure it is published using current_goal_status??
+        if goal_temp[0] + current_position[0] > (get_map_x() - 10) or goal_temp[1] + \
+                current_position[1] > (get_map_y() - 10):
+            current_direction += 1
+            goal_temp = get_random_goal(current_direction)  # get random goal
 
         goals_list.append(goal_temp)  # add goal to goal list(for further uses)
         move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
                 goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
+        # move_to(goal_temp[0], goal_temp[1], goal_temp[2],
+        #         goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
         return 'goalPublished'
 
 
@@ -308,25 +331,22 @@ class InitRescue(smach.State):
 class Park(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['parkSuccessful', 'parkFail'])
-        self.mutex = threading.Lock()
-        self.victim_side = 0
-        self.subscriber = rospy.Subscriber((robot_namespace + "/human_detection_result"), detectedobjectsMsg,
-                                           self.callback)
+        # self.mutex = threading.Lock()
+        # self.victim_side = 0
+        # self.subscriber = rospy.Subscriber((robot_namespace + "/human_detection_result"), detectedobjectsMsg,
+        #                                    self.callback)
 
-    def callback(self, msg):
-        self.mutex.acquire()
-        self.victim_side = msg.lr
-        self.mutex.release()
+    # def callback(self, msg):
+    #     self.mutex.acquire()
+    #     self.mutex.release()
 
     def execute(self, userdata):
         rospy.loginfo('Executing Park')
-        current_position = get_current_position()  # current translation of robot in an array[][]
-        # goal_list_temp = [x, y, 0, w, 0, 0, x]  # Goal Format
-
-        goal_temp = [x, y, 0, w, 0, 0, x]
-        goals_list.append(goal_temp)  # add goal to goal list(for further uses)
-        move_to(goal_temp[0] + current_position[0], goal_temp[1] + current_position[1], goal_temp[2],
-                goal_temp[3], goal_temp[4], goal_temp[5], goal_temp[6], )
+        rospy.loginfo('STAYING HERE')
+        goal_id = GoalID()
+        goal_id.id = ''
+        pub = rospy.Publisher('/move_base/cancel', GoalID, queue_size=10)
+        pub.publish(goal_id)
 
         return 'parkSuccessful'
 
@@ -356,7 +376,7 @@ class PassTask(smach.State):
 
 
 def main():
-    rospy.init_node('behaviour')
+    rospy.init_node('behaviour', anonymous=True)
     sm = smach.StateMachine(
         outcomes=['SHUTDOWN'])
     global robot_namespace
