@@ -82,9 +82,6 @@ class MyPlugin(Plugin):
 		
 		context.add_widget(self._widget)
 		self.subscribeToJoy()
-		thread = Thread(target = self.publishBehaviourTopic, args = ())
-    		thread.start()
-    		thread.join()
 
 	def checkJoyData(self, data):
 		if (data.buttons[7] == 1):
@@ -94,6 +91,8 @@ class MyPlugin(Plugin):
 			self._widget.textBrowser.append(str(self._widget.robot_box.currentText()))
 
 	def publishCmdVel(self, data):
+		self._widget.textBrowser.append('here')
+		self._widget.textBrowser.append(str(self.getNextIndex()))
 		self.publishBehaviourTopic()
 		self._pubs[self.getNextIndex()-1].publish(data)
 
@@ -136,27 +135,8 @@ class MyPlugin(Plugin):
 		rospy.Subscriber('joy', Joy, self.checkJoyData)
 
 	def publishBehaviourTopic(self):
-		"""while True
-			index = self.currentIndex
-			if (index == 1):
-				self._pubs[4].publish('1')
-			else:
-				self._pubs[4].publish('0')
-			if (index == 2):
-				self._pubs[5].publish('1')
-			else:
-				self._pubs[5].publish('0')
-			if (index == 3):
-				self._pubs[6].publish('1')
-			else:
-				self._pubs[6].publish('0')
-			if (index == 4):
-				self._pubs[7].publish('1')
-			else:
-				self._pubs[7].publish('0')
-			sleep(1)
-		"""
-		index = self.getNextIndex()
+		self._widget.textBrowser.append('here')
+		index = self.getNextIndex()-1
 		if (index == 1):
 			self._pubs[4].publish('1')
 		else:
